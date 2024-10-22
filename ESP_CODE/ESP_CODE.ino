@@ -2,12 +2,16 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "DHT.h"
+#include <WiFi.h>
+
+const char* ssid = "iPhone de Malu";
+const char* password = "male1306";
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define DHTPIN 16
 #define DHTTYPE DHT11
-#define SCREEN_ADDRESS 0x3C
+#define SCREEN_ADDRESS 0x3C // endereço do display
 
 const unsigned char termometro [] PROGMEM = {
 	0x00, 0x00, 0x03, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x07, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xf0, 
@@ -40,10 +44,19 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT);
 DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+
+  while(WiFi.status() != WL_CONNECTED){
+    delay(500);
+    Serial.println("Conectando ao WiFi...");
+  }
+
+  Serial.println("Conectado");
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println("SSD1306");
+    Serial.println("Erro ao inicializar display");
   }
 
   dht.begin();
@@ -61,19 +74,19 @@ void loop() {
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
 
-  display.print("Temperatura:\n");
+  display.println("Temperatura:");
   display.print(t);
   display.println(" C");
   
   display.println('\n');
 
-  display.print("Umidade:\n");
+  display.println("Umidade:");
   display.print(h);
   display.println("%");
   
   display.drawBitmap(80, 0, termometro, 48, 64, 1);
   
-  display.display();
+  display.display(); // função que passa tudo que foi feito para o display
 
   delay(1000);
 }
