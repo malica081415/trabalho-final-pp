@@ -3,9 +3,10 @@
 #include <Adafruit_SSD1306.h>
 #include "DHT.h"
 #include <WiFi.h>
+#include <ESPAsyncWebServer.h>
 
-const char* ssid = "iPhone de Malu";
-const char* password = "male1306";
+const char* ssid = "Eric";
+const char* password = "12345679";
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -43,6 +44,10 @@ const unsigned char termometro [] PROGMEM = {
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT);
 DHT dht(DHTPIN, DHTTYPE);
 
+AsyncWebServer server(80);
+
+float temperature = 0.0; 
+
 void setup() {
   Serial.begin(115200);
 
@@ -53,20 +58,33 @@ void setup() {
     Serial.println("Conectando ao WiFi...");
   }
 
-  Serial.println("Conectado");
+  Serial.print("Conectado em: ");
+  Serial.println(WiFi.localIP());
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println("Erro ao inicializar display");
   }
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+    Serial.println("ESP32 Web Server: Nova requisição recebida:");
+    
+    // Cria a resposta HTML com o valor atual do sensor
+    String html = "<html><body><h1>Valor do Sensor: " + String(temperature) + "</h1></body></html>";
+    
+    // Envia a resposta ao cliente
+    request->send(200, "text/html", html);
+  });
+
+  server.begin();
 
   dht.begin();
 }
 
 void loop() {
   float h = dht.readHumidity();
-  float t = dht.readTemperature();
+  temperature = dht.readTemperature();
 
-  if (isnan(h) || isnan(t))
+  if (isnan(h) || isnan(temperature))
     return;
 
   display.clearDisplay();
@@ -75,7 +93,7 @@ void loop() {
   display.setCursor(0, 0);
 
   display.println("Temperatura:");
-  display.print(t);
+  display.print(temperature);
   display.println(" C");
   
   display.println('\n');
